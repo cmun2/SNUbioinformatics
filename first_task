@@ -1,0 +1,26 @@
+#Linux space making
+conda activate lab
+#download files from https://www.gencodegenes.org/mouse/
+#Comprehensive gene annotation(PRI GTF file) & Transcript sequence(CHR FASTA file) & Genome sequence, primary assembly[GRCm39] (PRI FASTA file)
+wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.primary_assembly.annotation.gtf.gz
+wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.transcripts.fa.gz
+wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/GRCm39.primary_assembly.genome.fa.gz
+#https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE37114 (query files attached : RNA seq(Untreated, siLuc, siLin28a), RPF(siLuc, siLin28a), Lin28a Clip-35L33G
+wget 	https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos1/sra-pub-run-1/SRR458753/SRR458753.2
+#.... doing these steps for 6 sequences
+#fastq-dump needed for the additional filtering or clipping of the downloaded reads using sratoolkit(six sequence files)
+fastq-dump SRA*****
+#gzip the gene files(three files but using only two for the experiment[gtf file and GRCm39.primary_assembly.genome.fa.gz]
+gzip http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.primary_assembly.annotation.gtf.gz
+#before STAR mapping, clipping the 6 fastq-dumped files, http://hannonlab.cshl.edu/fastx_toolkit/commandline.html
+#tried to use cutadapt but kept making errors due to making some blank spaces by using the tool(fastx_clipper takes longer time, couldn't read the process)
+#-q(or --quality-cutoff) can be used to trim low-quality ends from reads.
+cutadapt -a ADAPTER -o OUTPUT.fastq INPUT.fastq -q 15
+fastx_clipper -a ADAPTER -i INFILE -o OUTFILE
+#STAR genome generate
+STAR --runThreadN 15 --runMode genomeGenerate --genomeDir /starIndex --genomeFastaFiles GRCm39.primary_assembly.genome.fa 
+--sjdbGTFfile gencode.vM27.primary_assembly.annotation.gtf
+#Trimmed data into STAR Aligning or Mapping
+STAR --runThreadN 15 --genomeDir /starAligned --readFilesCommand zcat --readFilesIn SRR..... fastq --outSAMtype BAM SortedByCoordinate --outFileNamePrefix /SRR..../SRR....
+
+
